@@ -339,28 +339,134 @@ public class Steam {
     }
     
     public boolean login(String username, String password) throws IOException {
-    player.seek(0);
+        player.seek(0);
 
+        while (player.getFilePointer() < player.length()) {
+            int code = player.readInt();
+            String usernameTemp = player.readUTF();
+            String passwordTemp = player.readUTF();
+            String nombre = player.readUTF();
+            long nacimiento = player.readLong();
+            int contadorDescargas = player.readInt();
+            int imageSize = player.readInt();
+            player.skipBytes(imageSize);  
+            String tipoUsuario = player.readUTF();  
+
+            if (usernameTemp.equals(username) && passwordTemp.equals(password)) {
+                JOptionPane.showMessageDialog(null, "Bienvenido " + nombre + " (" + tipoUsuario + ")", "Login Exitoso", JOptionPane.INFORMATION_MESSAGE);
+                return true; 
+            }
+        }
+
+        JOptionPane.showMessageDialog(null, "Usuario o password incorrectos", "Error de Login", JOptionPane.ERROR_MESSAGE);
+        return false; 
+    }
+    
+    public boolean deletePlayer(String username) throws IOException {
+    File tempFile = new File("steam/temp_player.stm");
+    RandomAccessFile temp = new RandomAccessFile(tempFile, "rw");
+    
+    player.seek(0);
+    boolean usuarioEliminarEncontrado = false;
+    
     while (player.getFilePointer() < player.length()) {
+        long pos = player.getFilePointer();
         int code = player.readInt();
-        String storedUsername = player.readUTF();
-        String storedPassword = player.readUTF();
+        String usernamePlayer = player.readUTF();
+        String password = player.readUTF();
         String nombre = player.readUTF();
         long nacimiento = player.readLong();
         int contadorDescargas = player.readInt();
         int imageSize = player.readInt();
-        player.skipBytes(imageSize);  
-        String tipoUsuario = player.readUTF();  
-
-        if (storedUsername.equals(username) && storedPassword.equals(password)) {
-            JOptionPane.showMessageDialog(null, "Bienvenido " + nombre + " (" + tipoUsuario + ")", "Login Exitoso", JOptionPane.INFORMATION_MESSAGE);
-            return true; 
+        byte[] imageData = new byte[imageSize];
+        player.readFully(imageData);
+        String tipoUsuario = player.readUTF();
+        
+        if (username == usernamePlayer) {
+            usuarioEliminarEncontrado = true; 
+            continue;
         }
+        
+        temp.writeInt(code);
+        temp.writeUTF(username);
+        temp.writeUTF(password);
+        temp.writeUTF(nombre);
+        temp.writeLong(nacimiento);
+        temp.writeInt(contadorDescargas);
+        temp.writeInt(imageSize);
+        temp.write(imageData);
+        temp.writeUTF(tipoUsuario);
     }
+    
+    temp.close();
+    player.close();
+    
+    if (usuarioEliminarEncontrado) {
+        File fileViejo = new File("steam/player.stm");
+        fileViejo.delete(); 
+        tempFile.renameTo(fileViejo); 
+        player = new RandomAccessFile("steam/player.stm", "rw"); 
+        JOptionPane.showMessageDialog(null, "Jugador eliminado correctamente.", "Exito", JOptionPane.INFORMATION_MESSAGE);
+        return true;
+    } else {
+        tempFile.delete();
+        player = new RandomAccessFile("steam/player.stm", "rw");
+        JOptionPane.showMessageDialog(null, "Jugador no encontrado.", "Error", JOptionPane.ERROR_MESSAGE);
+        return false;
+    }
+}
 
-    JOptionPane.showMessageDialog(null, "Usuario o contraseña incorrectos", "Error de Login", JOptionPane.ERROR_MESSAGE);
-    return false; 
-    }
+    public boolean deleteGame(String tituloJuego) throws IOException {
+        File tempFile = new File("steam/temp_games.stm");
+        RandomAccessFile temp = new RandomAccessFile(tempFile, "rw");
+
+        games.seek(0);
+        boolean juegoEliminarEncontrado = false;
+
+        while (games.getFilePointer() < games.length()) {
+            long pos = games.getFilePointer();
+            int code = games.readInt();
+            String titulo = games.readUTF();
+            char sistemaOperativo = games.readChar();
+            int edadMinima = games.readInt();
+            double precio = games.readDouble();
+            int contadorDescargas = games.readInt();
+            int imageSize = games.readInt();
+            byte[] imageData = new byte[imageSize];
+            games.readFully(imageData);
+
+            if (tituloJuego == titulo) {
+                juegoEliminarEncontrado = true; 
+                continue;
+            }
+
+            temp.writeInt(code);
+            temp.writeUTF(titulo);
+            temp.writeChar(sistemaOperativo);
+            temp.writeInt(edadMinima);
+            temp.writeDouble(precio);
+            temp.writeInt(contadorDescargas);
+            temp.writeInt(imageSize);
+            temp.write(imageData);
+        }
+
+        temp.close();
+        games.close();
+
+        if (juegoEliminarEncontrado) {
+            File fileViejo = new File("steam/games.stm");
+            fileViejo.delete();
+            tempFile.renameTo(fileViejo); 
+            games = new RandomAccessFile("steam/games.stm", "rw"); 
+            JOptionPane.showMessageDialog(null, "Juego eliminado correctamente.", "Exito", JOptionPane.INFORMATION_MESSAGE);
+            return true;
+        } else {
+            tempFile.delete();
+            games = new RandomAccessFile("steam/games.stm", "rw");
+            JOptionPane.showMessageDialog(null, "Juego no encontrado.", "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+}
 
 
 }
