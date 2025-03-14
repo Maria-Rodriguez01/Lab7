@@ -89,6 +89,13 @@ public class Steam {
      * String nombre() long nacimiento (8) int contador downloads(4) byte[]
      * imagenPlayer String tipoUsuario
      *
+     * @param nacimiento
+     * @param username
+     * @param password
+     * @param nombre
+     * @param imagen
+     * @param tipoUsuario
+     * @throws java.io.IOException
      */
     public void addPlayer(Calendar nacimiento, String username, String password, String nombre, byte[] imagen, String tipoUsuario)
             throws IOException {

@@ -6,6 +6,7 @@ package GUI;
 
 import java.awt.GridLayout;
 import javax.swing.*;
+import lab_7_binarios.Steam;
 
 /**
  *
@@ -21,6 +22,7 @@ public class perfil extends JFrame {
     
     // dependencias
     private String user, pass;
+    private Steam steam = new Steam();
     
     // constructor
     public perfil(String user, String pass) {
@@ -102,8 +104,6 @@ public class perfil extends JFrame {
     }
     
     public void eliminar () {}
-    
-    public void cambiarTipoUser () {}
     
     // va en codeP.setText()
     public final String getCode () {

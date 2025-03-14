@@ -5,9 +5,16 @@
 package GUI;
 
 import java.awt.GridLayout;
-import java.awt.HeadlessException;
+
+import java.awt.image.BufferedImage;
+
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
+import javax.imageio.ImageIO;
 import java.util.Calendar;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.*;
 import lab_7_binarios.Steam;
 
@@ -45,8 +52,20 @@ public class LOGIN extends JFrame {
         crear = new JButton ("Crear Cuenta");
         
         // action listener
-        login.addActionListener(e -> login());
-        crear.addActionListener(e -> crear());
+        login.addActionListener(e -> {
+            try {
+                login();
+            } catch (IOException ex) {
+                Logger.getLogger(LOGIN.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
+        crear.addActionListener(e -> {
+            try {
+                crear();
+            } catch (IOException ex) {
+                Logger.getLogger(LOGIN.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
         
         // agregar al panel
         contenido.setLayout(new GridLayout(4, 2));
@@ -66,6 +85,7 @@ public class LOGIN extends JFrame {
     
     /**
      * funcion para login
+     * @throws java.io.IOException
      */
     public final void login () throws IOException{
         if(steamManager.login(user, pass)){
@@ -75,10 +95,16 @@ public class LOGIN extends JFrame {
     
     /**
      * funcion para crear cuenta
+     * @throws java.io.IOException
      */
-    public final void crear () {
+    public final void crear () throws IOException {
         String nombre = JOptionPane.showInputDialog(null, "Ingrese su nombre");
-        steamManager.addPlayer(Calendar.getInstance(), user, pass, nombre, imagen, "Normal");
+        
+        BufferedImage bImage = ImageIO.read(new File("imagenes/default.png"));
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        ImageIO.write(bImage, "jpg", bos );
+        byte [] data = bos.toByteArray();
+        steamManager.addPlayer(Calendar.getInstance(), user, pass, nombre, data, "Normal");
         
     }
     
