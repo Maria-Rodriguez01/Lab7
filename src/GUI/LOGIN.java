@@ -6,7 +6,10 @@ package GUI;
 
 import java.awt.GridLayout;
 import java.awt.HeadlessException;
+import java.io.IOException;
+import java.util.Calendar;
 import javax.swing.*;
+import lab_7_binarios.Steam;
 
 /**
  *Login o crear cuenta:
@@ -15,7 +18,8 @@ import javax.swing.*;
  */
 public class LOGIN extends JFrame {
     // menu de variables
-    private String user, pass;    
+    private String user, pass;  
+    private Steam steamManager = new Steam();
     private final JPanel contenido;
     private final JButton login, crear;
     private JTextPane logTxt;
@@ -63,14 +67,18 @@ public class LOGIN extends JFrame {
     /**
      * funcion para login
      */
-    public final void login () {
-        
+    public final void login () throws IOException{
+        if(steamManager.login(user, pass)){
+//        new mainFrame(user,pass);
+        }
     }
     
     /**
      * funcion para crear cuenta
      */
     public final void crear () {
+        String nombre = JOptionPane.showInputDialog(null, "Ingrese su nombre");
+        steamManager.addPlayer(Calendar.getInstance(), user, pass, nombre, imagen, "Normal");
         
     }
     

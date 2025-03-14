@@ -90,8 +90,11 @@ public class Steam {
      * imagenPlayer String tipoUsuario
      *
      */
-    private void addPlayer(Calendar nacimiento, String username, String password, String nombre, byte[] imagen, String tipoUsuario)
+    public void addPlayer(Calendar nacimiento, String username, String password, String nombre, byte[] imagen, String tipoUsuario)
             throws IOException {
+        if(usuarioExiste(username)){
+            throw new IOException("El usuario ya existe " + username);
+        }
         long pointer = player.length();
         player.seek(pointer);
         int code = getNextCode(1);
@@ -293,7 +296,6 @@ public class Steam {
             }
 
 
-            // Mostrar la información en un JOptionPane
             JOptionPane.showMessageDialog(null, gameList.toString(),
                     "Lista de Juegos", JOptionPane.INFORMATION_MESSAGE);
 
@@ -303,4 +305,62 @@ public class Steam {
                     "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
+    
+    /**
+     * formato player.stm int code (4) String username () String password()
+     * String nombre() long nacimiento (8) int contador downloads(4) byte[]
+     * imagenPlayer String tipoUsuario
+     *
+     */
+    
+    private boolean usuarioExiste(String username) throws IOException {
+        player.seek(0);
+
+        while (player.getFilePointer() < player.length()) {
+            int code = player.readInt();
+            String existingUsername = player.readUTF(); 
+
+            if (existingUsername.equals(username)) {
+                return true; 
+            }
+
+            player.readUTF(); 
+            player.readUTF();
+            player.skipBytes(12);
+
+            int imageSize = (int) (player.length() - player.getFilePointer() - 2); 
+            if (imageSize > 0) {
+                player.seek(player.getFilePointer() + imageSize); 
+            }
+
+            player.readUTF(); 
+        }
+        return false;
+    }
+    
+    public boolean login(String username, String password) throws IOException {
+    player.seek(0);
+
+    while (player.getFilePointer() < player.length()) {
+        int code = player.readInt();
+        String storedUsername = player.readUTF();
+        String storedPassword = player.readUTF();
+        String nombre = player.readUTF();
+        long nacimiento = player.readLong();
+        int contadorDescargas = player.readInt();
+        int imageSize = player.readInt();
+        player.skipBytes(imageSize);  
+        String tipoUsuario = player.readUTF();  
+
+        if (storedUsername.equals(username) && storedPassword.equals(password)) {
+            JOptionPane.showMessageDialog(null, "Bienvenido " + nombre + " (" + tipoUsuario + ")", "Login Exitoso", JOptionPane.INFORMATION_MESSAGE);
+            return true; 
+        }
+    }
+
+    JOptionPane.showMessageDialog(null, "Usuario o contraseña incorrectos", "Error de Login", JOptionPane.ERROR_MESSAGE);
+    return false; 
+    }
+
+
 }
