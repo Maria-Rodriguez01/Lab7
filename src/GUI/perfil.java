@@ -29,15 +29,15 @@ public class perfil extends JFrame {
         setSize(600, 600);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
-        setLayout(new GridLayout());
+        setLayout(new GridLayout(2, 1));
         
         // dependencias
         this.user = user;
         this.pass = pass;
         
         // Inicialización de paneles
-        contenido = new JPanel(new GridLayout());
-        perfil = new JPanel(new GridLayout());
+        contenido = new JPanel(new GridLayout(7, 2));
+        perfil = new JPanel(new GridLayout(1, 2));
         
         // Inicialización de etiquetas
         User = new JLabel("Usuario:");
@@ -55,13 +55,13 @@ public class perfil extends JFrame {
         passP = new JTextPane();
         passP.setText(pass);
         codeP = new JTextPane();
-        codeP.setText("falta funcion de codigo"); // funcion para get code del user
+        codeP.setText(getCode()); // funcion para get code del user
         nameP = new JTextPane();
-        nameP.setText("funcion de name falta");
+        nameP.setText(getName());
         nacimientoP = new JTextPane();
-        nacimientoP.setText("funcion de brith falta");
+        nacimientoP.setText(getNacimiento());
         downP = new JTextPane();
-        downP.setText("Downloads: funcion de downloads falta");
+        downP.setText(getDownloads());
         
         // Inicialización de botones
         tipo = new JButton("Tipo");
@@ -78,12 +78,53 @@ public class perfil extends JFrame {
         add(perfil);
         
         // contenido
+        contenido.add(User);
+        contenido.add(userP);
+        contenido.add(Pass);
+        contenido.add(passP);
+        contenido.add(code);
+        contenido.add(codeP);
+        contenido.add(name);
+        contenido.add(nameP);
+        contenido.add(nacimiento);
+        contenido.add(nacimientoP);
+        contenido.add(downloads);
+        contenido.add(downP);
         
+        
+        // contenido : botones
+        contenido.add(tipo);
+        contenido.add(eliminar);
+        add (contenido);
         
         // hacer visible
         setVisible(true);
     }
     
+    public void eliminar () {}
+    
+    public void cambiarTipoUser () {}
+    
+    // va en codeP.setText()
+    public final String getCode () {
+        return "";
+    }    
+    
+    //** va en nameP.setText()
+    @Override
+    public final String getName () {
+        return "";
+    }    
+    
+    // va en downP.setText()
+    public final String getDownloads () {
+        return "";
+    }    
+    
+    // va en nacimientoP.setText()
+    public final String getNacimiento () {
+        return "";
+    }    
     
     public static void main(String[] args) {
         new perfil("robRigattoni", "123");
