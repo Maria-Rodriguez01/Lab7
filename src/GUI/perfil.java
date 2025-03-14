@@ -5,6 +5,11 @@
 package GUI;
 
 import java.awt.GridLayout;
+import java.io.IOException;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.*;
 import lab_7_binarios.Steam;
 
@@ -17,7 +22,7 @@ public class perfil extends JFrame {
     private JPanel contenido, perfil;
     private JLabel User, Pass, code, name, nacimiento, tipoUser, foto, downloads;
     private JTextPane userP, passP, codeP, nameP, nacimientoP, downP;
-    private JButton tipo, eliminar, cambiar;
+    private JButton tipo, eliminar, cambiar, regresar;
     private ImageIcon fotazo;
     
     // dependencias
@@ -25,9 +30,9 @@ public class perfil extends JFrame {
     private Steam steam = new Steam();
     
     // constructor
-    public perfil(String user, String pass) {
+    public perfil(String user, String pass) throws IOException {
         // seteando el frame
-        setTitle ("Inicio de sesion");
+        setTitle ("Perfil");
         setSize(600, 600);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -38,7 +43,7 @@ public class perfil extends JFrame {
         this.pass = pass;
         
         // Inicialización de paneles
-        contenido = new JPanel(new GridLayout(7, 2));
+        contenido = new JPanel(new GridLayout(8, 2));
         perfil = new JPanel(new GridLayout(1, 2));
         
         // Inicialización de etiquetas
@@ -57,9 +62,9 @@ public class perfil extends JFrame {
         passP = new JTextPane();
         passP.setText(pass);
         codeP = new JTextPane();
-        codeP.setText(getCode()); // funcion para get code del user
+        codeP.setText(String.valueOf(getCode())); // funcion para get code del user
         nameP = new JTextPane();
-        nameP.setText(getName());
+        nameP.setText(getNombre());
         nacimientoP = new JTextPane();
         nacimientoP.setText(getNacimiento());
         downP = new JTextPane();
@@ -68,10 +73,43 @@ public class perfil extends JFrame {
         // Inicialización de botones
         tipo = new JButton("Tipo");
         eliminar = new JButton("Eliminar");
-        cambiar = new JButton("Cambiar");
+        cambiar = new JButton("Cambiar");   
+        regresar = new JButton("regresar");
+        
+        // aciones
+        cambiar.addActionListener(e -> {
+            JOptionPane.showMessageDialog (null, "no disponible D:");
+
+        });
+        tipo.addActionListener(e -> {
+            String[] opciones = {"admins", "normal"};
+            String seleccion = (String) JOptionPane.showInputDialog(null, "Seleccione una opción:", "Tipo de Usuario", JOptionPane.QUESTION_MESSAGE, null, opciones, opciones[0]);
+            try {
+                steam.setUserTipo(user, pass, seleccion);
+            } catch (IOException ex) {
+                Logger.getLogger(perfil.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
+        regresar.addActionListener(e -> {
+            new mainFrame(user, pass);
+            dispose();
+        });
+        eliminar.addActionListener(e -> {
+            try {
+                if(steam.deletePlayer(user)){
+                    new LOGIN();
+                    dispose();
+                    
+                }
+            } catch (IOException ex) {
+                Logger.getLogger(perfil.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            
+        });
+        
         
         // Inicialización de imagen
-        fotazo = new ImageIcon("ruta/a/la/imagen.jpg");
+        fotazo = new ImageIcon(getImage());
         
         // agregar foto 
         foto.setIcon(fotazo);
@@ -97,6 +135,7 @@ public class perfil extends JFrame {
         // contenido : botones
         contenido.add(tipo);
         contenido.add(eliminar);
+        contenido.add(regresar);
         add (contenido);
         
         // hacer visible
@@ -106,14 +145,13 @@ public class perfil extends JFrame {
     public void eliminar () {}
     
     // va en codeP.setText()
-    public final String getCode () {
-        return "";
+    public final int getCode () throws IOException {
+        return steam.getUserCode(user, pass);
     }    
     
     //** va en nameP.setText()
-    @Override
-    public final String getName () {
-        return "";
+    public final String getNombre () throws IOException {      
+        return steam.getName(user, pass);
     }    
     
     // va en downP.setText()
@@ -122,11 +160,24 @@ public class perfil extends JFrame {
     }    
     
     // va en nacimientoP.setText()
-    public final String getNacimiento () {
-        return "";
+    public final String getNacimiento () throws IOException {
+        Date date = steam.getBirth(user, pass);
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        int mes = calendar.get(Calendar.MONTH) + 1;
+        int day = calendar.get(Calendar.DAY_OF_MONTH);
+        int anno = calendar.get(Calendar.YEAR);
+        
+        return day + "/" + mes + "/" + anno;
     }    
     
-    public static void main(String[] args) {
-        new perfil("robRigattoni", "123");
+    public final String getImage () {
+        try {
+            return steam.getImage(user, pass);
+        }catch (IOException e) {
+            System.out.println("whoops");
+        }
+        return "";
     }
+    
 }

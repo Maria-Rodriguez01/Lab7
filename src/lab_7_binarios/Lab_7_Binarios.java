@@ -4,6 +4,8 @@
  */
 package lab_7_binarios;
 
+import GUI.LOGIN;
+
 /**
  *
  * @author Maria Gabriela
@@ -14,7 +16,7 @@ public class Lab_7_Binarios {
      * @param args the command line arguments
      */
     public static void main(String[] args) {
-      
+        new LOGIN();
     }
     
 }

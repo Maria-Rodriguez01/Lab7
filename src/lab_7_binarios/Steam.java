@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.file.*;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
@@ -19,7 +20,7 @@ import javax.swing.JOptionPane;
  */
 public class Steam {
 
-    RandomAccessFile codes, games, player;
+    public RandomAccessFile codes, games, player;
     File file;
 
     public Steam() {
@@ -71,7 +72,7 @@ public class Steam {
      *
      *
      */
-    private void addGame(String juego, char sistemaOperativo, int edadMinima, double precio, byte[] imagen) throws IOException {
+    public void addGame(String juego, char sistemaOperativo, int edadMinima, double precio, String imagen) throws IOException {
         int code = getNextCode(0);
         long pointer = games.length();
         games.seek(pointer);
@@ -81,12 +82,12 @@ public class Steam {
         games.writeInt(edadMinima);
         games.writeDouble(precio);
         games.writeInt(0);
-        games.write(imagen);
+        games.writeUTF(imagen);
     }
 
     /**
      * formato player.stm int code (4) String username () String password()
-     * String nombre() long nacimiento (8) int contador downloads(4) byte[]
+     * String nombre() long nacimiento (8) int contador downloads(4) String
      * imagenPlayer String tipoUsuario
      *
      * @param nacimiento
@@ -97,10 +98,11 @@ public class Steam {
      * @param tipoUsuario
      * @throws java.io.IOException
      */
-    public void addPlayer(Calendar nacimiento, String username, String password, String nombre, byte[] imagen, String tipoUsuario)
+    public boolean addPlayer(Calendar nacimiento, String username, String password, String nombre, String imagen, String tipoUsuario)
             throws IOException {
-        if(usuarioExiste(username)){
-            throw new IOException("El usuario ya existe " + username);
+        if (usuarioExiste(username)) {
+            JOptionPane.showMessageDialog(null, "Ya existe el usuario");
+            return false;
         }
         long pointer = player.length();
         player.seek(pointer);
@@ -111,8 +113,9 @@ public class Steam {
         player.writeUTF(nombre);
         player.writeLong(nacimiento.getTimeInMillis());
         player.writeInt(0);
-        player.write(imagen);
+        player.writeUTF(imagen);
         player.writeUTF(tipoUsuario);
+        return true;
     }
 
     public boolean downloadGame(int gameCode, int playerCode, char os) {
@@ -302,7 +305,6 @@ public class Steam {
                 gameList.append(code).append(" | ").append(title).append(" | ").append(os).append(" | ").append(minAge).append(" | $").append(price).append(" | ").append(downloadCount).append("\n");
             }
 
-
             JOptionPane.showMessageDialog(null, gameList.toString(),
                     "Lista de Juegos", JOptionPane.INFORMATION_MESSAGE);
 
@@ -312,39 +314,34 @@ public class Steam {
                     "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
-    
+
     /**
      * formato player.stm int code (4) String username () String password()
      * String nombre() long nacimiento (8) int contador downloads(4) byte[]
      * imagenPlayer String tipoUsuario
      *
      */
-    
     private boolean usuarioExiste(String username) throws IOException {
-        player.seek(0);
+        if (player.length() > 0) {
+            player.seek(0);
+            while (player.getFilePointer() < player.length()) {
+                int code = player.readInt();
+                String existingUsername = player.readUTF();
 
-        while (player.getFilePointer() < player.length()) {
-            int code = player.readInt();
-            String existingUsername = player.readUTF(); 
+                if (existingUsername.equals(username)) {
+                    return true;
+                }
 
-            if (existingUsername.equals(username)) {
-                return true; 
+                player.readUTF();
+                player.readUTF();
+                player.skipBytes(12);
+                player.readUTF();
+                player.readUTF();
             }
-
-            player.readUTF(); 
-            player.readUTF();
-            player.skipBytes(12);
-
-            int imageSize = (int) (player.length() - player.getFilePointer() - 2); 
-            if (imageSize > 0) {
-                player.seek(player.getFilePointer() + imageSize); 
-            }
-
-            player.readUTF(); 
         }
         return false;
     }
-    
+
     public boolean login(String username, String password) throws IOException {
         player.seek(0);
 
@@ -355,73 +352,86 @@ public class Steam {
             String nombre = player.readUTF();
             long nacimiento = player.readLong();
             int contadorDescargas = player.readInt();
-            int imageSize = player.readInt();
-            player.skipBytes(imageSize);  
-            String tipoUsuario = player.readUTF();  
+            String direccion = player.readUTF();
+            String tipoUsuario = player.readUTF();
 
             if (usernameTemp.equals(username) && passwordTemp.equals(password)) {
                 JOptionPane.showMessageDialog(null, "Bienvenido " + nombre + " (" + tipoUsuario + ")", "Login Exitoso", JOptionPane.INFORMATION_MESSAGE);
-                return true; 
+                return true;
             }
         }
 
         JOptionPane.showMessageDialog(null, "Usuario o password incorrectos", "Error de Login", JOptionPane.ERROR_MESSAGE);
-        return false; 
-    }
-    
-    public boolean deletePlayer(String username) throws IOException {
-    File tempFile = new File("steam/temp_player.stm");
-    RandomAccessFile temp = new RandomAccessFile(tempFile, "rw");
-    
-    player.seek(0);
-    boolean usuarioEliminarEncontrado = false;
-    
-    while (player.getFilePointer() < player.length()) {
-        long pos = player.getFilePointer();
-        int code = player.readInt();
-        String usernamePlayer = player.readUTF();
-        String password = player.readUTF();
-        String nombre = player.readUTF();
-        long nacimiento = player.readLong();
-        int contadorDescargas = player.readInt();
-        int imageSize = player.readInt();
-        byte[] imageData = new byte[imageSize];
-        player.readFully(imageData);
-        String tipoUsuario = player.readUTF();
-        
-        if (username == usernamePlayer) {
-            usuarioEliminarEncontrado = true; 
-            continue;
-        }
-        
-        temp.writeInt(code);
-        temp.writeUTF(username);
-        temp.writeUTF(password);
-        temp.writeUTF(nombre);
-        temp.writeLong(nacimiento);
-        temp.writeInt(contadorDescargas);
-        temp.writeInt(imageSize);
-        temp.write(imageData);
-        temp.writeUTF(tipoUsuario);
-    }
-    
-    temp.close();
-    player.close();
-    
-    if (usuarioEliminarEncontrado) {
-        File fileViejo = new File("steam/player.stm");
-        fileViejo.delete(); 
-        tempFile.renameTo(fileViejo); 
-        player = new RandomAccessFile("steam/player.stm", "rw"); 
-        JOptionPane.showMessageDialog(null, "Jugador eliminado correctamente.", "Exito", JOptionPane.INFORMATION_MESSAGE);
-        return true;
-    } else {
-        tempFile.delete();
-        player = new RandomAccessFile("steam/player.stm", "rw");
-        JOptionPane.showMessageDialog(null, "Jugador no encontrado.", "Error", JOptionPane.ERROR_MESSAGE);
         return false;
     }
-}
+
+    public boolean deletePlayer(String username) throws IOException {
+        File tempFile = new File("steam/temp_player.stm");
+        RandomAccessFile temp = new RandomAccessFile(tempFile, "rw");
+
+        player.seek(0);
+        boolean usuarioEliminarEncontrado = false;
+
+        while (player.getFilePointer() < player.length()) {
+            long pos = player.getFilePointer();
+            int code = player.readInt();
+            String usernamePlayer = player.readUTF();
+            String password = player.readUTF();
+            String nombre = player.readUTF();
+            long nacimiento = player.readLong();
+            int contadorDescargas = player.readInt();
+            String image = player.readUTF();
+            String tipoUsuario = player.readUTF();
+
+            if (!username.equals(usernamePlayer)) {
+                
+                temp.writeInt(code);
+                temp.writeUTF(username);
+                temp.writeUTF(password);
+                temp.writeUTF(nombre);
+                temp.writeLong(nacimiento);
+                temp.writeInt(contadorDescargas);
+                temp.writeUTF(image);
+                temp.writeUTF(tipoUsuario);
+                
+            }else{usuarioEliminarEncontrado = true;}
+        }
+        player.close();
+        temp.close();
+               
+        if (usuarioEliminarEncontrado) {
+            File fileViejo = new File("steam/player.stm");
+            String fileviejo = "steam/player.stm";
+            if (fileViejo.delete()) { // Check if deletion was successful
+                if (tempFile.renameTo(new File(fileviejo))) { // Check if renaming was successful
+                    try {
+                        player = new RandomAccessFile("steam/player.stm", "rw");
+                        JOptionPane.showMessageDialog(null, "Jugador eliminado correctamente.", "Exito", JOptionPane.INFORMATION_MESSAGE);
+                        return true;
+                    } catch (IOException e) {
+                        player = new RandomAccessFile("steam/player.stm", "rw");
+                        JOptionPane.showMessageDialog(null, "Error opening player.stm", "Error", JOptionPane.ERROR_MESSAGE);
+                        e.printStackTrace();
+                        return false;
+                    }
+
+                } else {
+                    player = new RandomAccessFile("steam/player.stm", "rw");
+                    JOptionPane.showMessageDialog(null, "Error renaming file.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return false;
+                }
+            } else {
+                JOptionPane.showMessageDialog(null, "Error deleting old player file.", "Error", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
+        } else {
+            tempFile.delete();
+            player = new RandomAccessFile("steam/player.stm", "rw");
+            JOptionPane.showMessageDialog(null, "Jugador no encontrado.", "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+    }
 
     public boolean deleteGame(String tituloJuego) throws IOException {
         File tempFile = new File("steam/temp_games.stm");
@@ -443,7 +453,7 @@ public class Steam {
             games.readFully(imageData);
 
             if (tituloJuego == titulo) {
-                juegoEliminarEncontrado = true; 
+                juegoEliminarEncontrado = true;
                 continue;
             }
 
@@ -463,8 +473,8 @@ public class Steam {
         if (juegoEliminarEncontrado) {
             File fileViejo = new File("steam/games.stm");
             fileViejo.delete();
-            tempFile.renameTo(fileViejo); 
-            games = new RandomAccessFile("steam/games.stm", "rw"); 
+            tempFile.renameTo(fileViejo);
+            games = new RandomAccessFile("steam/games.stm", "rw");
             JOptionPane.showMessageDialog(null, "Juego eliminado correctamente.", "Exito", JOptionPane.INFORMATION_MESSAGE);
             return true;
         } else {
@@ -473,7 +483,95 @@ public class Steam {
             JOptionPane.showMessageDialog(null, "Juego no encontrado.", "Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
-}
+    }
+    
+    public int getUserCode(String user, String pass) throws IOException{
+        player.seek(0);
 
+        while (player.getFilePointer() < player.length()) {
+            int code = player.readInt();
+            String usernameTemp = player.readUTF();
+            String passwordTemp = player.readUTF();
+            String nombre = player.readUTF();
+            long nacimiento = player.readLong();
+            int contadorDescargas = player.readInt();
+            String direccion = player.readUTF();
+            String tipoUsuario = player.readUTF();
+
+            if (usernameTemp.equals(user) && passwordTemp.equals(pass)) {
+                return code;
+            }
+        }
+        return -1;
+    }
+    
+    public long searchPos (String user, String pass) throws IOException {
+        player.seek(0);
+
+        while (player.getFilePointer() < player.length()) {
+            long pos = player.getFilePointer();
+            int code = player.readInt();
+            String usernameTemp = player.readUTF();
+            String passwordTemp = player.readUTF();
+            String nombre = player.readUTF();
+            long nacimiento = player.readLong();
+            int contadorDescargas = player.readInt();
+            String direccion = player.readUTF();
+            String tipoUsuario = player.readUTF();
+
+            if (usernameTemp.equals(user) && passwordTemp.equals(pass)) {
+                return pos;
+            }
+        }
+        return -1;        
+    }
+    
+    public String getName (String user, String pass) throws IOException {
+        player.seek(searchPos(user, pass));
+        player.readInt();
+        player.readUTF();
+        player.readUTF();
+        return player.readUTF();
+    }
+    
+    public Date getBirth (String user, String pass) throws IOException {
+        player.seek(searchPos(user, pass));
+        player.skipBytes(4);
+        player.readUTF();
+        player.readUTF();
+        return new Date(player.readLong());
+    }
+    
+    public String getImage (String user, String pass) throws IOException {
+        player.seek(searchPos(user, pass));
+        player.skipBytes(4);
+        player.readUTF();
+        player.readUTF();
+        player.readUTF();
+        player.skipBytes(12);
+        return player.readUTF();
+    }
+    
+     public String getUserTipo (String user, String pass) throws IOException {
+        player.seek(searchPos(user, pass));
+        player.skipBytes(4);
+        player.readUTF();
+        player.readUTF();
+        player.readUTF();
+        player.skipBytes(12);
+        player.readUTF();
+        return player.readUTF();
+    }
+    
+     public void setUserTipo  (String user, String pass, String tipo) throws IOException {
+        player.seek(searchPos(user, pass));
+        player.skipBytes(4);
+        player.readUTF();
+        player.readUTF();
+        player.readUTF();
+        player.skipBytes(12);
+        player.readUTF();
+        player.writeUTF(tipo);
+     }
 
 }
