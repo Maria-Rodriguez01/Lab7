@@ -102,7 +102,7 @@ public class LOGIN extends JFrame {
         
         BufferedImage bImage = ImageIO.read(new File("imagenes/default.png"));
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        ImageIO.write(bImage, "jpg", bos );
+        ImageIO.write(bImage, "png", bos );
         byte [] data = bos.toByteArray();
         steamManager.addPlayer(Calendar.getInstance(), user, pass, nombre, data, "Normal");
         
