@@ -117,7 +117,6 @@ public class Steam {
 
     public boolean downloadGame(int gameCode, int playerCode, char os) {
         try {
-            // Verificar si el juego y el jugador existen
             games.seek(0);
             boolean gameExists = false;
             String gameTitle = "";
@@ -167,7 +166,6 @@ public class Steam {
                 return false;
             }
 
-            // Verificar la edad del jugador
             Calendar today = Calendar.getInstance();
             Calendar birth = Calendar.getInstance();
             birth.setTimeInMillis(birthdate);
@@ -177,7 +175,6 @@ public class Steam {
                 return false;
             }
 
-            // Crear archivo de descarga
             int downloadCode = getNextCode(2);
             File downloadFile = new File("steam/downloads/download_" + downloadCode + ".stm");
             FileWriter writer = new FileWriter(downloadFile);
@@ -258,11 +255,9 @@ public class Steam {
                 File reportFile = new File(txtFile);
                 FileWriter writer = new FileWriter(reportFile, false); // append en false para recrearlo
 
-                // Formatear fecha de nacimiento
                 SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
                 String birthdateStr = dateFormat.format(new Date(birthdate));
 
-                // Escribir datos del cliente
                 writer.write("=== REPORTE DE CLIENTE ===\n");
                 writer.write("Codigo: " + clientCode + "\n");
                 writer.write("Nombre de usuario: " + username + "\n");
